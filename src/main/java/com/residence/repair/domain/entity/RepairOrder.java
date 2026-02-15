@@ -20,8 +20,8 @@ public class RepairOrder {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "repair_order_id")
-    private Long id;
+    @Column(name = "order_id")
+    private Integer id;
 
     @Column(nullable = false, length = 1000)
     private String description;
@@ -44,6 +44,6 @@ public class RepairOrder {
     @JoinColumn(name = "tenant_id", nullable = false)
     private Tenant tenant;
 
-    @OneToMany(mappedBy = "repairOder", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "repairOrder", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Media> mediaList = new ArrayList<>();
 }

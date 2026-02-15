@@ -1,6 +1,3 @@
-/**
- * @file Media.java
- */
 package com.residence.repair.domain.entity;
 
 import com.residence.repair.domain.enums.MediaType;
@@ -16,7 +13,8 @@ public class Media {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "url_id")
+    private Integer id;
 
     @Column(nullable = false)
     private String url;
@@ -26,6 +24,6 @@ public class Media {
     private MediaType mediaType;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "repair_order_id", nullable = false)
+    @JoinColumn(name = "order_id", nullable = false)
     private RepairOrder repairOrder;
 }
