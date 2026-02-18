@@ -1,6 +1,5 @@
 package com.residence.repair.dto.reponse;
 
-import com.residence.repair.domain.entity.Media;
 import com.residence.repair.domain.enums.MediaType;
 import com.residence.repair.domain.enums.OrderStatus;
 import lombok.Builder;
@@ -20,7 +19,9 @@ public class OrderReponse {
     private String entryNote;
     private LocalDateTime createdAt;
     private LocalDateTime scheduledAt;
-    private List<Media> mediaList = new ArrayList<>();
+
+    @Builder.Default
+    private List<MediaResponse> mediaList = new ArrayList<>();
 
     @Data
     @Builder
