@@ -21,7 +21,7 @@ public class RepairOrder {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "order_id")
-    private Integer id;
+    private Long id;
 
     @Column(nullable = false, length = 1000)
     private String description;

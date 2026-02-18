@@ -8,7 +8,7 @@ import lombok.Data;
 
 @Data
 public class UserReponse {
-    private Integer id;
+    private Long id;
     private String email;
     private UserRole role;
     private String nom;

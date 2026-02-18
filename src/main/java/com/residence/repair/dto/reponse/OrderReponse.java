@@ -13,7 +13,7 @@ import java.util.List;
 @Data
 @Builder
 public class OrderReponse {
-    private Integer id;
+    private Long id;
     private String description;
     private OrderStatus status;
     private Boolean entryAuthorized;
