@@ -6,6 +6,7 @@ import com.residence.repair.dto.request.CreateOrderRequest;
 import com.residence.repair.dto.request.OrderScheduleRequest;
 import com.residence.repair.dto.request.UpdateOrderStatusRequest;
 import com.residence.repair.dto.response.OrderResponse;
+import com.residence.repair.dto.response.OrderSummaryResponse;
 import com.residence.repair.repository.MediaRepository;
 import com.residence.repair.repository.RepairOrderRepository;
 import com.residence.repair.repository.UserRepository;
@@ -116,7 +117,7 @@ public class OrderService {
     /**
      * Obtenir la liste filtrée par rôle.
      */
-    public List<OrderResponse> getAllOrders() {
+    public List<OrderSummaryResponse> getAllOrders() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByEmail(email).orElseThrow();
 
@@ -129,9 +130,29 @@ public class OrderService {
             orders = orderRepository.findByResidentOrderByCreatedAtDesc((Tenant) user);
         }
         // Conversion cruciale : Entity -> DTO
-        return orders.stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+        return orders.stream().map(o -> OrderSummaryResponse.builder()
+                .id(o.getId())
+                .createdAt(o.getCreatedAt())
+                .status(o.getStatus())
+                .build()).collect(Collectors.toList());
+    }
+    /**
+     * Récupérer les détails d'un ordre spécifique.
+     */
+    @Transactional(readOnly = true)
+    public OrderResponse getOrderDetails(Long orderId) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email).orElseThrow();
+
+        RepairOrder order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+
+        // Sécurité: Si c'est un locataire, il ne peut voir que son propre ordre
+        if (user instanceof Tenant && !order.getTenant().getEmail().equals(email)) {
+            throw new RuntimeException("Access denied: This order does not belong to you");
+        }
+
+        return mapToResponse(order);
     }
 
     /**
