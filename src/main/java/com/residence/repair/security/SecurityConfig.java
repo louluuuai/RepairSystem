@@ -45,10 +45,10 @@ public class SecurityConfig {
         http.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         // Autorisations
-        // 白名单接口放行，其余需要认证
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/health", "/auth/**").permitAll()
+                .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/tenant/**").hasRole("TENANT")
                 .anyRequest().authenticated()
         );
 

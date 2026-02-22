@@ -4,6 +4,6 @@ import com.residence.repair.domain.enums.OrderStatus;
 import lombok.Data;
 
 @Data
-public class UpdateOrderStatus {
+public class UpdateOrderStatusRequest {
     private OrderStatus orderStatus;
 }

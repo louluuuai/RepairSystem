@@ -1,16 +1,21 @@
 package com.residence.repair.dto.request;
 
+import com.residence.repair.domain.enums.UserRole;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
-public class Register {
+public class RegisterRequest {
     @NotBlank
     private String email;
     @NotBlank
     private String passwordHash;
-
+    @NotBlank
     private String nom;
+    @NotBlank
     private String prenom;
-    private String employeeId;
+
+    private String residenceName;
+    private String roomNumber;
 }

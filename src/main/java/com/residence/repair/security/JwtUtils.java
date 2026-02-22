@@ -1,6 +1,7 @@
 package com.residence.repair.security;
 
 
+import com.residence.repair.domain.enums.UserRole;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -15,7 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Outil JWT: génération et validation des tokens (access/refresh).
+ * Outil JWT: génération et validation des access tokens.
  */
 @Slf4j
 @Component
@@ -26,9 +27,6 @@ public class JwtUtils {
 
     @Value("${jwt.access-token-expire-time}")
     private long accessTokenExpireTime;
-
-    @Value("${jwt.refresh-token-expire-time}")
-    private long refreshTokenExpireTime;
 
     private SecretKey key;
 
@@ -44,20 +42,11 @@ public class JwtUtils {
     /**
      * Générer Access Token.
      */
-    public String generateAccessToken(String email, String role) {
+    public String generateAccessToken(String email, UserRole role) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", role);
         claims.put("type", "ACCESS");
         return generateToken(claims, email, accessTokenExpireTime);
-    }
-
-    /**
-     * Générer Refresh Token.
-     */
-    public String generateRefreshToken(String email) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("type", "REFRESH");
-        return generateToken(claims, email, refreshTokenExpireTime);
     }
 
     private String generateToken(Map<String, Object> claims,
@@ -84,7 +73,7 @@ public class JwtUtils {
      * Extraire role depuis token.
      */
     public String getRoleFromToken(String token) {
-        return extractClaims(token).get("role", String.class);
+        return extractClaims(token).get("role").toString();
     }
 
     /**

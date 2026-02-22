@@ -1,4 +1,4 @@
-package com.residence.repair.dto.reponse;
+package com.residence.repair.dto.response;
 
 import com.residence.repair.domain.enums.MediaType;
 import com.residence.repair.domain.enums.OrderStatus;
@@ -11,7 +11,7 @@ import java.util.List;
 
 @Data
 @Builder
-public class OrderReponse {
+public class OrderResponse {
     private Long id;
     private String description;
     private OrderStatus status;
