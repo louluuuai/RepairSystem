@@ -11,10 +11,8 @@ import java.util.List;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class Tenant extends User{
-    @Column(nullable = false)
-    private String residenceName;
 
-    @Column(nullable = false)
+    private String residenceName;
     private String roomNumber;
 
     @OneToMany(mappedBy = "tenant", cascade = CascadeType.ALL)

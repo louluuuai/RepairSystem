@@ -15,7 +15,8 @@ public class RegisterRequest {
     private String nom;
     @NotBlank
     private String prenom;
-
+    @NotBlank
     private String residenceName;
+    @NotBlank
     private String roomNumber;
 }
