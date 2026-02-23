@@ -23,6 +23,6 @@ spring:
       org.springframework.web: INFO
       org.hibernate.SQL: DEBUG
 
-  jwt:
-    secret: 0123456789876543210_!@#%*()_at_least_256_bits
-    access-token-expire-time: 7200000 # 2 heures
+jwt:
+  secret: "0123456789876543210_!@%*()_long_secret_key_at_least_256_bits"
+  access-token-expire-time: 7200000 # 2 heures
