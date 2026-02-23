@@ -6,7 +6,6 @@
  */
 package com.residence.repair.service;
 
-import com.residence.repair.domain.entity.Admin;
 import com.residence.repair.domain.entity.Tenant;
 import com.residence.repair.domain.entity.User;
 import com.residence.repair.domain.enums.UserRole;
@@ -14,9 +13,11 @@ import com.residence.repair.dto.request.LoginRequest;
 import com.residence.repair.dto.response.TokenResponse;
 import com.residence.repair.dto.response.UserResponse;
 import com.residence.repair.dto.request.RegisterRequest;
+import com.residence.repair.exception.ApiException;
 import com.residence.repair.repository.UserRepository;
 import com.residence.repair.security.JwtUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,7 +41,7 @@ public class AuthService {
     @Transactional
     public UserResponse registerTenant(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Email already exists");
+            throw new ApiException("EMAIL_ALREADY_EXISTS", "Email already exists", HttpStatus.CONFLICT);
         }
 
         Tenant tenant = new Tenant();
@@ -66,10 +67,10 @@ public class AuthService {
      */
     public TokenResponse login(LoginRequest dto) {
         User user = userRepository.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid email"));
+                .orElseThrow(() -> new ApiException("INVALID_CREDENTIALS", "Invalid email or password", HttpStatus.UNAUTHORIZED));
 
         if (!passwordEncoder.matches(dto.getPasswordHash(), user.getPasswordHash())) {
-            throw new RuntimeException("The password doesn't match");
+            throw new ApiException("INVALID_CREDENTIALS", "Invalid email or password", HttpStatus.UNAUTHORIZED);
         }
         String accessToken = jwtUtils.generateAccessToken(user.getEmail(), user.getRole());
 

@@ -16,7 +16,7 @@ public class CreateOrderRequest {
     @NotNull
     private Boolean entryAuthorized;
     private String entryNote;
-    private List<Media> mediaList = new ArrayList<>();
+    private List<MediaRequest> mediaList = new ArrayList<>();
 
     @Data
     public static class MediaRequest {

@@ -7,10 +7,12 @@ import com.residence.repair.dto.request.OrderScheduleRequest;
 import com.residence.repair.dto.request.UpdateOrderStatusRequest;
 import com.residence.repair.dto.response.OrderResponse;
 import com.residence.repair.dto.response.OrderSummaryResponse;
+import com.residence.repair.exception.ApiException;
 import com.residence.repair.repository.MediaRepository;
 import com.residence.repair.repository.RepairOrderRepository;
 import com.residence.repair.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,25 +37,33 @@ public class OrderService {
     @Transactional
     public void createOrder(CreateOrderRequest request) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        Tenant tenant = (Tenant) userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ApiException("USER_NOT_FOUND", "User not found", HttpStatus.NOT_FOUND));
+
+        // Vérification du rôle pour éviter ClassCastException
+        if (!(user instanceof Tenant)) {
+            throw new ApiException("ROLE_FORBIDDEN", "Only tenants can create orders", HttpStatus.FORBIDDEN);
+        }
 
         RepairOrder order = new RepairOrder();
         order.setDescription(request.getDescription());
         order.setEntryAuthorized(request.getEntryAuthorized());
         order.setEntryNote(request.getEntryNote());
-        order.setTenant(tenant);
+        order.setTenant((Tenant) user);
         order.setStatus(OrderStatus.EN_ATTENTE);
-        
+
         // Sauvegarde initiale pour générer l'ID
         RepairOrder savedOrder = orderRepository.save(order);
 
         // Liaison des médias
-        if (request.getMediaList() != null && !request.getMediaList().isEmpty()) {
-            request.getMediaList().forEach(media -> {
+        if (request.getMediaList() != null) {
+            for (CreateOrderRequest.MediaRequest m : request.getMediaList()) {
+                Media media = new Media();
+                media.setUrl(m.getUrl());
+                media.setMediaType(m.getType());
                 media.setRepairOrder(savedOrder);
                 mediaRepository.save(media);
-            });
+            }
         }
     }
 
@@ -68,12 +78,12 @@ public class OrderService {
 
         // Sécurité : Seul le propriétaire peut annuler
         if (!order.getTenant().getEmail().equals(email)) {
-            throw new RuntimeException("Access denied: You are not the owner of this order");
+            throw new ApiException("ACCESS_DENIED", "Not the owner of this order", HttpStatus.FORBIDDEN);
         }
 
         // Vérification du statut
         if (order.getStatus() != OrderStatus.EN_ATTENTE) {
-            throw new RuntimeException("Cannot cancel order: Order is already " + order.getStatus());
+            throw new ApiException("INVALID_STATUS", "Order is already " + order.getStatus(), HttpStatus.BAD_REQUEST);
         }
 
         order.setStatus(OrderStatus.ANNULE);
@@ -86,10 +96,9 @@ public class OrderService {
     public void scheduleOrder(Long orderId, OrderScheduleRequest request) {
 
         RepairOrder order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("Order not found with id: " + orderId));
-
+                .orElseThrow(() -> new ApiException("ORDER_NOT_FOUND", "Order not found", HttpStatus.NOT_FOUND));
         if (order.getStatus() != OrderStatus.EN_ATTENTE) {
-            throw new IllegalStateException("Invalid status transition");
+            throw new ApiException("INVALID_TRANSITION", "Order cannot be scheduled", HttpStatus.BAD_REQUEST);
         }
 
         order.setScheduledAt(request.getScheduledAt());
@@ -104,10 +113,10 @@ public class OrderService {
     public void updateStatus(Long orderId, UpdateOrderStatusRequest request) {
 
         RepairOrder order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("Order not found with id: " + orderId));
+                .orElseThrow(() -> new ApiException("ORDER_NOT_FOUND", "Order not found", HttpStatus.NOT_FOUND));
 
         if (order.getStatus() == OrderStatus.ANNULE && request.getOrderStatus() != OrderStatus.ANNULE) {
-            throw new RuntimeException("Cannot re-activate a cancelled order");
+            throw new ApiException("INVALID_ACTION", "Cannot re-activate cancelled order", HttpStatus.BAD_REQUEST);
         }
 
         order.setStatus(request.getOrderStatus());
@@ -137,7 +146,7 @@ public class OrderService {
                 .build()).collect(Collectors.toList());
     }
     /**
-     * Récupérer les détails d'un ordre spécifique.
+     * Récupérer les détails d'un ordre spécifique avec vérification de propriété.
      */
     @Transactional(readOnly = true)
     public OrderResponse getOrderDetails(Long orderId) {
@@ -145,11 +154,11 @@ public class OrderService {
         User user = userRepository.findByEmail(email).orElseThrow();
 
         RepairOrder order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+                .orElseThrow(() -> new ApiException("ORDER_NOT_FOUND", "Order not found", HttpStatus.NOT_FOUND));
 
         // Sécurité: Si c'est un locataire, il ne peut voir que son propre ordre
         if (user instanceof Tenant && !order.getTenant().getEmail().equals(email)) {
-            throw new RuntimeException("Access denied: This order does not belong to you");
+            throw new ApiException("ACCESS_DENIED", "You cannot view this order", HttpStatus.FORBIDDEN);
         }
 
         return mapToResponse(order);

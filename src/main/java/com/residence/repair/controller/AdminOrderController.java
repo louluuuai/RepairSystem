@@ -2,6 +2,7 @@ package com.residence.repair.controller;
 
 import com.residence.repair.dto.request.OrderScheduleRequest;
 import com.residence.repair.dto.request.UpdateOrderStatusRequest;
+import com.residence.repair.dto.response.ApiResponse;
 import com.residence.repair.dto.response.OrderResponse;
 import com.residence.repair.dto.response.OrderSummaryResponse;
 import com.residence.repair.service.OrderService;
@@ -28,37 +29,33 @@ public class AdminOrderController {
      * Voir tous les ordres de la résidence (Global).
      */
     @GetMapping
-    public ResponseEntity<List<OrderSummaryResponse>> getAllOrders() {
-        return ResponseEntity.ok(orderService.getAllOrders());
+    public ResponseEntity<ApiResponse<List<OrderSummaryResponse>>> getAllOrders() {
+        return ResponseEntity.ok(ApiResponse.ok(orderService.getAllOrders()));
     }
 
     /**
      * Obtenir détail d'une commande.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<OrderResponse> getDetails(@PathVariable Long id) {
-        return ResponseEntity.ok(orderService.getOrderDetails(id));
+    public ResponseEntity<ApiResponse<OrderResponse>> getDetails(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.ok(orderService.getOrderDetails(id)));
     }
 
     /**
      * Planifier une intervention.
      */
     @PutMapping("/{id}/schedule")
-    public ResponseEntity<Void> scheduleOrder(
-            @PathVariable Long id,
-            @Valid @RequestBody OrderScheduleRequest request) {
+    public ResponseEntity<ApiResponse<Void>> schedule(@PathVariable Long id, @Valid @RequestBody OrderScheduleRequest request) {
         orderService.scheduleOrder(id, request);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(ApiResponse.ok());
     }
 
     /**
      * Mettre à jour le statut (ex: Marquer comme Terminé).
      */
     @PatchMapping("/{id}/status")
-    public ResponseEntity<Void> updateStatus(
-            @PathVariable Long id,
-            @Valid @RequestBody UpdateOrderStatusRequest request) {
+    public ResponseEntity<ApiResponse<Void>> updateStatus(@PathVariable Long id, @Valid @RequestBody UpdateOrderStatusRequest request) {
         orderService.updateStatus(id, request);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(ApiResponse.ok());
     }
 }

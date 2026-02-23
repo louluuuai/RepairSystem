@@ -2,6 +2,7 @@ package com.residence.repair.controller;
 
 import com.residence.repair.dto.request.LoginRequest;
 import com.residence.repair.dto.request.RegisterRequest;
+import com.residence.repair.dto.response.ApiResponse;
 import com.residence.repair.dto.response.TokenResponse;
 import com.residence.repair.dto.response.UserResponse;
 import com.residence.repair.service.AuthService;
@@ -25,16 +26,16 @@ public class AuthController {
      * Inscription publique (Uniquement Locataire).
      */
     @PostMapping("/register")
-    public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<ApiResponse<UserResponse>> register(@Valid @RequestBody RegisterRequest request) {
         UserResponse response = authService.registerTenant(request);
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(response));
     }
 
     /**
      * Connexion et obtention du token.
      */
     @PostMapping("/login")
-    public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<ApiResponse<TokenResponse>> login(@Valid @RequestBody LoginRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(authService.login(request)));
     }
 }
