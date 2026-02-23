@@ -51,11 +51,11 @@ public class AdminOrderController {
     }
 
     /**
-     * Mettre à jour le statut (ex: Marquer comme Terminé).
+     * Terminer la commande.
      */
     @PatchMapping("/{id}/status")
     public ResponseEntity<ApiResponse<Void>> updateStatus(@PathVariable Long id, @Valid @RequestBody UpdateOrderStatusRequest request) {
-        orderService.updateStatus(id, request);
+        orderService.completeOrder(id, request);
         return ResponseEntity.ok(ApiResponse.ok());
     }
 }
