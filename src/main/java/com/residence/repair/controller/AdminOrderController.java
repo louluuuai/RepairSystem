@@ -6,6 +6,7 @@ import com.residence.repair.dto.response.ApiResponse;
 import com.residence.repair.dto.response.OrderResponse;
 import com.residence.repair.dto.response.OrderSummaryResponse;
 import com.residence.repair.service.OrderService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,7 @@ import java.util.List;
 @RequestMapping("/api/admin/orders")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')") // Restriction au rôle Admin
+@SecurityRequirement(name = "bearerAuth")
 public class AdminOrderController {
 
     private final OrderService orderService;

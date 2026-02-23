@@ -1,6 +1,5 @@
 package com.residence.repair.security;
 
-
 import com.residence.repair.domain.enums.UserRole;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;

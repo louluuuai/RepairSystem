@@ -41,14 +41,14 @@ public class SecurityConfig {
 
         http.csrf(csrf -> csrf.disable());
 
-        // Stateless: pas de session côté serveur
+        // Stateless, pas de session côté serveur
         http.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         // Autorisations
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/admin/**").hasRole("ADMIN")
-                .requestMatchers("/tenant/**").hasRole("TENANT")
+                // Autoriser l'accès aux ressources Swagger
+                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll()
+                .requestMatchers("/api/auth/**").permitAll()
                 .anyRequest().authenticated()
         );
 
