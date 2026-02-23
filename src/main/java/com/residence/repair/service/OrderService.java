@@ -1,3 +1,7 @@
+/**
+ * @file OrderService.java
+ * @author Xuelu AI
+ */
 package com.residence.repair.service;
 
 import com.residence.repair.domain.entity.*;
@@ -12,6 +16,7 @@ import com.residence.repair.repository.MediaRepository;
 import com.residence.repair.repository.RepairOrderRepository;
 import com.residence.repair.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,6 +29,7 @@ import java.util.stream.Collectors;
 /**
  * Service métier pour la gestion des commandes.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -32,17 +38,26 @@ public class OrderService {
     private final UserRepository userRepository;
     private final MediaRepository mediaRepository;
 
+    /**
+     * Obtenir l'email de l'utilisateur actuel en toute sécurité.
+     */
+    private String getCurrentUserEmail() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            log.error("Security Context Error: No authenticated principal found");
+            throw new ApiException("UNAUTHORIZED", "Authentication required", HttpStatus.UNAUTHORIZED);
+        }
+        return auth.getName();
+    }
 
     /**
      * Création d'une commande par tenant.
      */
     @Transactional
     public void createOrder(CreateOrderRequest request) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
-            throw new ApiException("UNAUTHORIZED", "User not authenticated", HttpStatus.UNAUTHORIZED);
-        }
-        String email = auth.getName();
+        String email = getCurrentUserEmail();
+        log.info("User '{}' is creating a new repair order.", email);
+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ApiException("USER_NOT_FOUND", "User not found", HttpStatus.NOT_FOUND));
 
@@ -71,6 +86,7 @@ public class OrderService {
                 mediaRepository.save(media);
             }
         }
+        log.info("Order successfully saved for user '{}'.", email);
     }
 
     /**
@@ -78,11 +94,9 @@ public class OrderService {
      */
     @Transactional
     public void cancelOrder(Long orderId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
-            throw new ApiException("UNAUTHORIZED", "User not authenticated", HttpStatus.UNAUTHORIZED);
-        }
-        String email = auth.getName();
+        String email = getCurrentUserEmail();
+        log.info("User '{}' is attempting to cancel order #{}", email, orderId);
+
         RepairOrder order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ApiException("ORDER_NOT_FOUND", "Order not found", HttpStatus.NOT_FOUND));
         // Sécurité : Seul le propriétaire peut annuler
@@ -97,13 +111,15 @@ public class OrderService {
 
         order.setStatus(OrderStatus.ANNULE);
         orderRepository.save(order);
+        log.info("Order #{} cancelled by user '{}'.", orderId, email);
     }
     /**
      * Planification par admin.
      */
     @Transactional
     public void scheduleOrder(Long orderId, OrderScheduleRequest request) {
-
+        String email = getCurrentUserEmail();
+        log.info("User '{}' is attempting to plan order #{}", email, orderId);
         RepairOrder order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ApiException("ORDER_NOT_FOUND", "Order not found", HttpStatus.NOT_FOUND));
         if (order.getStatus() != OrderStatus.EN_ATTENTE) {
@@ -113,6 +129,7 @@ public class OrderService {
         order.setScheduledAt(request.getScheduledAt());
         order.setStatus(OrderStatus.PLANIFIE);
         orderRepository.save(order);
+        log.info("Order #{} planned by user '{}'.", orderId, email);
     }
 
     /**
@@ -121,6 +138,8 @@ public class OrderService {
     @Transactional
     public void completeOrder(Long orderId, UpdateOrderStatusRequest request) {
 
+        String email = getCurrentUserEmail();
+        log.info("User '{}' completes order #{}", email, orderId);
         RepairOrder order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ApiException("ORDER_NOT_FOUND", "Order not found", HttpStatus.NOT_FOUND));
 
@@ -130,17 +149,15 @@ public class OrderService {
 
         order.setStatus(OrderStatus.TERMINE);
         orderRepository.save(order);
+        log.info("Order #{} completed by user '{}'.", orderId, email);
     }
 
     /**
      * Obtenir la liste filtrée par rôle.
      */
     public List<OrderSummaryResponse> getAllOrders() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
-            throw new ApiException("UNAUTHORIZED", "User not authenticated", HttpStatus.UNAUTHORIZED);
-        }
-        String email = auth.getName();
+        String email = getCurrentUserEmail();
+        log.info("User '{}' is attempting to get all orders.", email);
         User user = userRepository.findByEmail(email).orElseThrow();
 
         List<RepairOrder> orders;
@@ -151,6 +168,7 @@ public class OrderService {
             // Locataire voit ses propres demandes
             orders = orderRepository.findByResidentOrderByCreatedAtDesc((Tenant) user);
         }
+        log.info("All orders found by user '{}'.", email);
         // Conversion cruciale : Entity -> DTO
         return orders.stream().map(o -> OrderSummaryResponse.builder()
                 .id(o.getId())
@@ -163,11 +181,8 @@ public class OrderService {
      */
     @Transactional(readOnly = true)
     public OrderResponse getOrderDetails(Long orderId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
-            throw new ApiException("UNAUTHORIZED", "User not authenticated", HttpStatus.UNAUTHORIZED);
-        }
-        String email = auth.getName();
+        String email = getCurrentUserEmail();
+        log.info("User '{}' is attempting to get order details #{}", email, orderId);
         User user = userRepository.findByEmail(email).orElseThrow();
 
         RepairOrder order = orderRepository.findById(orderId)
@@ -177,7 +192,7 @@ public class OrderService {
         if (user instanceof Tenant && !order.getTenant().getEmail().equals(email)) {
             throw new ApiException("ACCESS_DENIED", "You cannot view this order", HttpStatus.FORBIDDEN);
         }
-
+        log.info("Order details found by user '{}'.", email);
         return mapToResponse(order);
     }
 
