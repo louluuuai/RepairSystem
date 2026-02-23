@@ -1,8 +1,6 @@
 /**
  * @file AuthService.java
- * @author
- * @date 2026-02-21
- * @version 1.0
+ * @author Xuelu AI
  */
 package com.residence.repair.service;
 
@@ -17,6 +15,7 @@ import com.residence.repair.exception.ApiException;
 import com.residence.repair.repository.UserRepository;
 import com.residence.repair.security.JwtUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
  * - inscription (tenant)
  * - connexion (login)
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -40,6 +40,7 @@ public class AuthService {
      */
     @Transactional
     public UserResponse registerTenant(RegisterRequest request) {
+        log.info("New registration request for email: {}", request.getEmail());
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new ApiException("EMAIL_ALREADY_EXISTS", "Email already exists", HttpStatus.CONFLICT);
         }
@@ -55,6 +56,7 @@ public class AuthService {
         tenant.setRoomNumber(request.getRoomNumber());
 
         Tenant savedTenant = userRepository.save(tenant);
+        log.info("Registration successful for user: {}", savedTenant.getEmail());
         return UserResponse.builder()
                 .email(savedTenant.getEmail())
                 .role(UserRole.TENANT)
@@ -66,13 +68,17 @@ public class AuthService {
      * Authentification et génération de Access Token.
      */
     public TokenResponse login(LoginRequest dto) {
+        log.info("Login attempt for email: {}", dto.getEmail());
+
         User user = userRepository.findByEmail(dto.getEmail())
                 .orElseThrow(() -> new ApiException("INVALID_CREDENTIALS", "Invalid email or password", HttpStatus.UNAUTHORIZED));
 
         if (!passwordEncoder.matches(dto.getPasswordHash(), user.getPasswordHash())) {
             throw new ApiException("INVALID_CREDENTIALS", "Invalid email or password", HttpStatus.UNAUTHORIZED);
         }
+
         String accessToken = jwtUtils.generateAccessToken(user.getEmail(), user.getRole());
+        log.info("Login attempt for email: {}", dto.getEmail());
 
         return TokenResponse.builder()
                 .accessToken(accessToken)
