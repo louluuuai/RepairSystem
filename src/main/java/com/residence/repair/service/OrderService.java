@@ -11,12 +11,17 @@ import com.residence.repair.dto.request.OrderScheduleRequest;
 import com.residence.repair.dto.request.UpdateOrderStatusRequest;
 import com.residence.repair.dto.response.OrderResponse;
 import com.residence.repair.dto.response.OrderSummaryResponse;
+import com.residence.repair.dto.response.PageResponse;
 import com.residence.repair.exception.ApiException;
 import com.residence.repair.repository.MediaRepository;
 import com.residence.repair.repository.RepairOrderRepository;
 import com.residence.repair.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -152,29 +157,65 @@ public class OrderService {
         log.info("Order #{} completed by user '{}'.", orderId, email);
     }
 
+
     /**
-     * Obtenir la liste filtrée par rôle.
+     * Récupérer les commandes avec pagination par roles.
+     *
+     * @param page numéro de page (0-based)
+     * @param size taille de page
+     * @param sortBy champ de tri, ex: "createdAt"
+     * @param direction sens de tri: ASC/DESC
+     * @param status filtre optionnel par statut
      */
-    public List<OrderSummaryResponse> getAllOrders() {
+    public PageResponse<OrderSummaryResponse> getAllOrders(
+            int page,
+            int size,
+            String sortBy,
+            Sort.Direction direction,
+            OrderStatus status
+    ) {
         String email = getCurrentUserEmail();
         log.info("User '{}' is attempting to get all orders.", email);
-        User user = userRepository.findByEmail(email).orElseThrow();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ApiException("USER_NOT_FOUND", "User not found", HttpStatus.NOT_FOUND));
 
-        List<RepairOrder> orders;
+        // limiter la taille maximale pour éviter l'abus
+        int safeSize = Math.min(Math.max(size, 1), 30);
+
+        // Tri par défaut si sort est vide
+        String safeSort = (sortBy == null || sortBy.isBlank()) ? "createdAt" : sortBy;
+
+        Pageable pageable = PageRequest.of(page, safeSize, Sort.by(direction, safeSort));
+
+
+        Page<RepairOrder> result;
         if (user instanceof Admin) {
-            // Admin voit tout, trié par date de création
-            orders = orderRepository.findAllByOrderByCreatedAtAsc();
+            if (status != null) {
+                result = orderRepository.findByStatus(status, pageable);
+            } else {
+                result = orderRepository.findAll(pageable);
+            }
         } else {
             // Locataire voit ses propres demandes
-            orders = orderRepository.findByTenantOrderByCreatedAtDesc((Tenant) user);
+            result = orderRepository.findByTenant((Tenant) user, pageable);
         }
-        log.info("All orders found by user '{}'.", email);
+        List<OrderSummaryResponse> content = result.getContent().stream()
+                .map(o -> OrderSummaryResponse.builder()
+                        .id(o.getId())
+                        .createdAt(o.getCreatedAt())
+                        .status(o.getStatus())
+                        .build())
+                .toList();
+
         // Conversion cruciale : Entity -> DTO
-        return orders.stream().map(o -> OrderSummaryResponse.builder()
-                .id(o.getId())
-                .createdAt(o.getCreatedAt())
-                .status(o.getStatus())
-                .build()).collect(Collectors.toList());
+        return PageResponse.<OrderSummaryResponse>builder()
+                .content(content)
+                .page(result.getNumber())
+                .size(result.getSize())
+                .totalElements(result.getTotalElements())
+                .totalPages(result.getTotalPages())
+                .last(result.isLast())
+                .build();
     }
     /**
      * Récupérer les détails d'un ordre spécifique avec vérification de propriété.

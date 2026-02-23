@@ -1,13 +1,16 @@
 package com.residence.repair.controller;
 
+import com.residence.repair.domain.enums.OrderStatus;
 import com.residence.repair.dto.request.CreateOrderRequest;
 import com.residence.repair.dto.response.ApiResponse;
 import com.residence.repair.dto.response.OrderResponse;
 import com.residence.repair.dto.response.OrderSummaryResponse;
+import com.residence.repair.dto.response.PageResponse;
 import com.residence.repair.service.OrderService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -39,8 +42,14 @@ public class OrderController {
      * Consulter ses propres ordres de réparation.
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<List<OrderSummaryResponse>>> getMyOrders() {
-        return ResponseEntity.ok(ApiResponse.ok(orderService.getAllOrders()));
+    public ResponseEntity<ApiResponse<PageResponse<OrderSummaryResponse>>> getMyOrders(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sort,
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction,
+            OrderStatus status
+    ) {
+        return ResponseEntity.ok(ApiResponse.ok(orderService.getAllOrders(page, size, sort, direction, status)));
     }
 
     /**

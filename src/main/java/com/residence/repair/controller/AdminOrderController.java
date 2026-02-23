@@ -1,14 +1,17 @@
 package com.residence.repair.controller;
 
+import com.residence.repair.domain.enums.OrderStatus;
 import com.residence.repair.dto.request.OrderScheduleRequest;
 import com.residence.repair.dto.request.UpdateOrderStatusRequest;
 import com.residence.repair.dto.response.ApiResponse;
 import com.residence.repair.dto.response.OrderResponse;
 import com.residence.repair.dto.response.OrderSummaryResponse;
+import com.residence.repair.dto.response.PageResponse;
 import com.residence.repair.service.OrderService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -31,8 +34,14 @@ public class AdminOrderController {
      * Voir tous les ordres de la résidence (Global).
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<List<OrderSummaryResponse>>> getAllOrders() {
-        return ResponseEntity.ok(ApiResponse.ok(orderService.getAllOrders()));
+    public ResponseEntity<ApiResponse<PageResponse<OrderSummaryResponse>>> getAllOrders(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sort,
+            @RequestParam(defaultValue = "ASC") Sort.Direction direction,
+            OrderStatus status
+    ) {
+        return ResponseEntity.ok(ApiResponse.ok(orderService.getAllOrders(page, size, sort, direction, status)));
     }
 
     /**

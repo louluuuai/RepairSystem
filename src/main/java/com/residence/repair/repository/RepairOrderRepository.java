@@ -3,6 +3,8 @@ package com.residence.repair.repository;
 import com.residence.repair.domain.entity.RepairOrder;
 import com.residence.repair.domain.entity.Tenant;
 import com.residence.repair.domain.enums.OrderStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -16,21 +18,15 @@ public interface RepairOrderRepository extends JpaRepository<RepairOrder, Long> 
     /**
      * Trouver toutes les commandes d'un locataire spécifique.
      */
-    List<RepairOrder> findByTenant(Tenant tenant);
+    Page<RepairOrder> findByTenant(Tenant tenant, Pageable pageable);
 
     /**
      * Trouver toutes les commandes par statut.
-     * @param status
      */
-    List<RepairOrder> findByStatus(OrderStatus status);
+    Page<RepairOrder> findByStatus(OrderStatus status, Pageable pageable);
 
     /**
-     * Trouver toutes les commandes triées par date de création.
+     * Trouver toutes les commandes.
      */
-    List<RepairOrder> findAllByOrderByCreatedAtAsc();
-    /**
-     * Trouver toutes les commandes triés par date (Ordre décroissant).
-     * @param tenant
-     */
-    List<RepairOrder> findByTenantOrderByCreatedAtDesc(Tenant tenant);
+    Page<RepairOrder> findAll(Pageable pageable);
 }
