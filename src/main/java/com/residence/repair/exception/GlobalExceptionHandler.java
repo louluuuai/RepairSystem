@@ -79,16 +79,4 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ApiResponse.error("FORBIDDEN", "Access denied"));
     }
-
-    /**
-     * Fallback: erreur inattendue.
-     * 兜底异常，避免把堆栈暴露给前端.
-     */
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Object>> handleUnexpected(Exception ex) {
-        //Log l'exception avec la pile d'exécution, stack trace, pour le débogage.
-        log.error("Unexpected system error detected: ", ex);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("INTERNAL_SERVER_ERROR", "Unexpected error"));
-    }
 }
