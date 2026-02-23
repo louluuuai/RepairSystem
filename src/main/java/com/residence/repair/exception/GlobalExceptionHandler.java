@@ -2,6 +2,8 @@ package com.residence.repair.exception;
 
 import com.residence.repair.dto.response.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -13,9 +15,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Gestion globale des erreurs (REST).
- * 全局异常处理：把各种异常统一转换为 ApiResponse，并给出正确 HTTP 状态码.
+ * Gestion globale des erreurs (REST) avec journalisation centralisée.
  */
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -29,6 +31,8 @@ public class GlobalExceptionHandler {
         for (FieldError fe : ex.getBindingResult().getFieldErrors()) {
             errors.put(fe.getField(), fe.getDefaultMessage());
         }
+        // Log les détails de validation
+        log.warn("Validation failed: {}", errors);
         return ResponseEntity.badRequest()
                 .body(ApiResponse.error("VALIDATION_ERROR", errors.toString()));
     }
@@ -49,26 +53,30 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ApiResponse<Object>> handleApiException(ApiException ex) {
+        // Journalisation de l'erreur métier
+        log.warn("Business error: code={}, message={}", ex.getCode(), ex.getMessage());
         return ResponseEntity.status(ex.getStatus())
                 .body(ApiResponse.error(ex.getCode(), ex.getMessage()));
     }
     /**
-     * Erreurs de login（mot de passe incorrect)
+     * Erreurs d'authentification, mot de passe incorrect
      * 登录失败（密码错误）
      */
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ApiResponse<Object>> handleBadCredentials() {
-        return ResponseEntity.status(401)
+    public ResponseEntity<ApiResponse<Object>> handleBadCredentials(BadCredentialsException ex) {
+        log.warn("Authentication failed: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ApiResponse.error("INVALID_CREDENTIALS", "Invalid email or password"));
     }
 
     /**
-     * AccessDeniedException Spring Security.
-     * Spring Security 的拒绝访问（例如 /admin/** 被 tenant 访问).
+     * Erreurs d'autorisation.
+     * 处理权限不足
      */
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Object>> handleAccessDenied(AccessDeniedException ex) {
-        return ResponseEntity.status(403)
+        log.warn("Access denied: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ApiResponse.error("FORBIDDEN", "Access denied"));
     }
 
@@ -78,7 +86,9 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleUnexpected(Exception ex) {
-        return ResponseEntity.status(500)
-                .body(ApiResponse.error("INTERNAL_ERROR", "Unexpected error"));
+        //Log l'exception avec la pile d'exécution, stack trace, pour le débogage.
+        log.error("Unexpected system error detected: ", ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("INTERNAL_SERVER_ERROR", "Unexpected error"));
     }
 }
