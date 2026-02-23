@@ -166,7 +166,7 @@ public class OrderService {
             orders = orderRepository.findAllByOrderByCreatedAtAsc();
         } else {
             // Locataire voit ses propres demandes
-            orders = orderRepository.findByResidentOrderByCreatedAtDesc((Tenant) user);
+            orders = orderRepository.findByTenantOrderByCreatedAtDesc((Tenant) user);
         }
         log.info("All orders found by user '{}'.", email);
         // Conversion cruciale : Entity -> DTO

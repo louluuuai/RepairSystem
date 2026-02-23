@@ -32,5 +32,5 @@ public interface RepairOrderRepository extends JpaRepository<RepairOrder, Long> 
      * Trouver toutes les commandes triés par date (Ordre décroissant).
      * @param tenant
      */
-    List<RepairOrder> findByResidentOrderByCreatedAtDesc(Tenant tenant);
+    List<RepairOrder> findByTenantOrderByCreatedAtDesc(Tenant tenant);
 }
