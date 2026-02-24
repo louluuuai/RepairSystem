@@ -19,6 +19,7 @@ public class ApiResponse<T> {
     private String code;
     private String message;
     private T data;
+    private Instant timestamp;
 
     /**
      * Succès avec données.
@@ -28,6 +29,7 @@ public class ApiResponse<T> {
                 .code("OK")
                 .message("success")
                 .data(data)
+                .timestamp(Instant.now())
                 .build();
     }
 
@@ -39,6 +41,7 @@ public class ApiResponse<T> {
                 .code("OK")
                 .message("success")
                 .data(null)
+                .timestamp(Instant.now())
                 .build();
     }
 
@@ -50,6 +53,7 @@ public class ApiResponse<T> {
                 .code(code)
                 .message(message)
                 .data(null)
+                .timestamp(Instant.now())
                 .build();
     }
 }
