@@ -3,7 +3,7 @@ server:
 
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/repair_system_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Europe/Paris&useSSL=false
+    url: jdbc:mysql://localhost:3306/repair_system_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Europe/Paris&useSSL=false&allowPublicKeyRetrieval=true
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -17,12 +17,22 @@ spring:
         physical_naming_strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
     show-sql: true
 
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 120MB
+
   logging:
     level:
       root: INFO
       org.springframework.web: INFO
       org.hibernate.SQL: DEBUG
 
+app:
+  storage:
+    upload-dir: ./uploads
+    public-base-url: /media
+
 jwt:
-  secret: "0123456789876543210_!@%*()_long_secret_key_at_least_256_bits"
+  secret: "0123456789876543210_!@%*()_HS512_long_secret_key_should_be_at_least_256_bits"
   access-token-expire-time: 7200000 # 2 heures

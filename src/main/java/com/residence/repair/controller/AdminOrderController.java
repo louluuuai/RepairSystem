@@ -16,13 +16,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 /**
  * Contrôleur pour la gestion administrative des ordres.
  */
 @RestController
-@RequestMapping("/api/admin/orders")
+@RequestMapping(value = "/api/admin/orders")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')") // Restriction au rôle Admin
 @SecurityRequirement(name = "bearerAuth")
@@ -33,7 +31,7 @@ public class AdminOrderController {
     /**
      * Voir tous les ordres de la résidence (Global).
      */
-    @GetMapping
+    @GetMapping(value = "")
     public ResponseEntity<ApiResponse<PageResponse<OrderSummaryResponse>>> getAllOrders(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -47,7 +45,7 @@ public class AdminOrderController {
     /**
      * Obtenir détail d'une commande.
      */
-    @GetMapping("/{id}")
+    @GetMapping(value = "/{id}")
     public ResponseEntity<ApiResponse<OrderResponse>> getDetails(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.ok(orderService.getOrderDetails(id)));
     }
@@ -55,7 +53,7 @@ public class AdminOrderController {
     /**
      * Planifier une intervention.
      */
-    @PutMapping("/{id}/schedule")
+    @PutMapping(value = "/{id}/schedule")
     public ResponseEntity<ApiResponse<Void>> schedule(@PathVariable Long id, @Valid @RequestBody OrderScheduleRequest request) {
         orderService.scheduleOrder(id, request);
         return ResponseEntity.ok(ApiResponse.ok());
@@ -64,7 +62,7 @@ public class AdminOrderController {
     /**
      * Terminer la commande.
      */
-    @PatchMapping("/{id}/status")
+    @PatchMapping(value = "/{id}/status")
     public ResponseEntity<ApiResponse<Void>> updateStatus(@PathVariable Long id, @Valid @RequestBody UpdateOrderStatusRequest request) {
         orderService.completeOrder(id, request);
         return ResponseEntity.ok(ApiResponse.ok());

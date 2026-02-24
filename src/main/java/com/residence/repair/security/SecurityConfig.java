@@ -49,6 +49,7 @@ public class SecurityConfig {
                 // Autoriser l'accès aux ressources Swagger
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/media/**").permitAll()
                 .anyRequest().authenticated()
         );
 

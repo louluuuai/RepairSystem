@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
  * Contrôleur pour l'authentification et l'inscription.
  */
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping(value = "/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -25,7 +25,7 @@ public class AuthController {
     /**
      * Inscription publique (Uniquement Locataire).
      */
-    @PostMapping("/register")
+    @PostMapping(value = "/register")
     public ResponseEntity<ApiResponse<UserResponse>> register(@Valid @RequestBody RegisterRequest request) {
         UserResponse response = authService.registerTenant(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(response));
@@ -34,7 +34,7 @@ public class AuthController {
     /**
      * Connexion et obtention du token.
      */
-    @PostMapping("/login")
+    @PostMapping(value = "/login")
     public ResponseEntity<ApiResponse<TokenResponse>> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(ApiResponse.ok(authService.login(request)));
     }
