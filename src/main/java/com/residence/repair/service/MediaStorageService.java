@@ -1,3 +1,7 @@
+/**
+ * @file MediaStorageService.java
+ * @author Xuelu AI
+ */
 package com.residence.repair.service;
 
 import com.residence.repair.config.StorageProperties;
