@@ -28,6 +28,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,6 +40,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class OrderService {
+
+    private static final ZoneId FRANCE_ZONE = ZoneId.of("Europe/Paris");
 
     private final RepairOrderRepository orderRepository;
     private final UserRepository userRepository;
@@ -75,6 +79,8 @@ public class OrderService {
         order.setDescription(request.getDescription());
         order.setEntryAuthorized(request.getEntryAuthorized());
         order.setEntryNote(request.getEntryNote());
+        // Horodatage métier: heure locale France au moment de la soumission.
+        order.setCreatedAt(LocalDateTime.now(FRANCE_ZONE));
         order.setTenant((Tenant) user);
         order.setStatus(OrderStatus.EN_ATTENTE);
 
