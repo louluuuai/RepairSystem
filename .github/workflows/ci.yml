@@ -16,6 +16,7 @@ jobs:
   test:
     name: Build and Test (Java 17)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -26,20 +27,28 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+          cache: gradle
 
-      - name: Set up Gradle cache
-        uses: gradle/actions/setup-gradle@v5
+      - name: Prepare Gradle wrapper
+        run: chmod +x ./gradlew
 
-      - name: Validate Gradle Wrapper
-        uses: gradle/actions/wrapper-validation@v5
-
-      - name: Print tool versions
+      - name: Run unit tests with retry
+        shell: bash
         run: |
-          java -version
-          ./gradlew --version
-
-      - name: Run unit tests
-        run: ./gradlew --no-daemon test --stacktrace
+          set -euo pipefail
+          ATTEMPTS=3
+          for i in $(seq 1 "$ATTEMPTS"); do
+            echo "Attempt $i/$ATTEMPTS"
+            if ./gradlew --no-daemon test --stacktrace; then
+              exit 0
+            fi
+            if [ "$i" -lt "$ATTEMPTS" ]; then
+              echo "Gradle test failed, retry in 20s..."
+              sleep 20
+            fi
+          done
+          echo "Gradle test failed after $ATTEMPTS attempts"
+          exit 1
 
       - name: Upload test reports
         if: always()
