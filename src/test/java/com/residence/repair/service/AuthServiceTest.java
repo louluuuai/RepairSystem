@@ -43,14 +43,14 @@ class AuthServiceTest {
     void registerTenant_shouldSaveTenantAndReturnUserResponse() {
         RegisterRequest request = new RegisterRequest();
         request.setEmail("tenant@test.com");
-        request.setPasswordHash("test");
+        request.setPasswordHash("test1234");
         request.setNom("Test");
         request.setPrenom("Test");
         request.setResidenceName("Residence A");
         request.setRoomNumber("301");
 
         when(userRepository.existsByEmail("tenant@test.com")).thenReturn(false);
-        when(passwordEncoder.encode("test")).thenReturn("hashed");
+        when(passwordEncoder.encode("test1234")).thenReturn("hashed");
         when(userRepository.save(any(Tenant.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         UserResponse response = authService.registerTenant(request);
@@ -73,10 +73,26 @@ class AuthServiceTest {
     }
 
     @Test
+    void registerTenant_shouldThrowWhenPasswordIsWeak() {
+        RegisterRequest request = new RegisterRequest();
+        request.setEmail("tenant@test.com");
+        request.setPasswordHash("abcdefg");
+        request.setNom("Test");
+        request.setPrenom("Test");
+        request.setResidenceName("Residence A");
+        request.setRoomNumber("301");
+
+        when(userRepository.existsByEmail("tenant@test.com")).thenReturn(false);
+
+        ApiException ex = assertThrows(ApiException.class, () -> authService.registerTenant(request));
+        assertEquals("INVALID_PASSWORD_FORMAT", ex.getCode());
+    }
+
+    @Test
     void login_shouldReturnTokenWhenCredentialsValid() {
         LoginRequest request = new LoginRequest();
         request.setEmail("tenant@test.com");
-        request.setPasswordHash("test");
+        request.setPasswordHash("test1234");
 
         Tenant user = new Tenant();
         user.setEmail("tenant@test.com");
@@ -84,7 +100,7 @@ class AuthServiceTest {
         user.setRole(UserRole.TENANT);
 
         when(userRepository.findByEmail("tenant@test.com")).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("test", "hashed")).thenReturn(true);
+        when(passwordEncoder.matches("test1234", "hashed")).thenReturn(true);
         when(jwtUtils.generateAccessToken("tenant@test.com", UserRole.TENANT)).thenReturn("jwt-token");
 
         TokenResponse response = authService.login(request);

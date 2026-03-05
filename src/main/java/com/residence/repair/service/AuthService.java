@@ -31,6 +31,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AuthService {
 
+    private static final String PASSWORD_POLICY_REGEX = "^(?=.*[A-Za-z])(?=.*\\d).{8,}$";
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
@@ -44,9 +46,17 @@ public class AuthService {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new ApiException("EMAIL_ALREADY_EXISTS", "Email already exists", HttpStatus.CONFLICT);
         }
+        if (!request.getPasswordHash().matches(PASSWORD_POLICY_REGEX)) {
+            throw new ApiException(
+                    "INVALID_PASSWORD_FORMAT",
+                    "Password must be at least 8 characters and contain letters and numbers",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
 
         Tenant tenant = new Tenant();
         tenant.setEmail(request.getEmail());
+        tenant.setRole(UserRole.TENANT);
         // Hashage du mot de passe
         tenant.setPasswordHash(passwordEncoder.encode(request.getPasswordHash()));
 

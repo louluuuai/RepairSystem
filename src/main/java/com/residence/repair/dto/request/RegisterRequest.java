@@ -1,8 +1,7 @@
 package com.residence.repair.dto.request;
 
-import com.residence.repair.domain.enums.UserRole;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 @Data
@@ -10,6 +9,10 @@ public class RegisterRequest {
     @NotBlank
     private String email;
     @NotBlank
+    @Pattern(
+            regexp = "^(?=.*[A-Za-z])(?=.*\\d).{8,}$",
+            message = "Password must be at least 8 characters and contain letters and numbers"
+    )
     private String passwordHash;
     @NotBlank
     private String nom;
